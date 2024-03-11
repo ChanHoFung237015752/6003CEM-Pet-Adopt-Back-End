@@ -7,3 +7,35 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+
+model Dog {
+  id            Int      @id @default(autoincrement())
+  name          String
+  age           Int
+  gender        String
+  breed         String
+  color         String
+  size          String
+  isNeutered    Boolean
+  isVaccinated  Boolean
+  personality   String
+  photos        Photo[]
+}
+
+model Photo {
+  id        Int    @id @default(autoincrement())
+  url       String
+  dogId     Int
+  dog       Dog    @relation(fields: [dogId], references: [id])
+}
+
+
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  email    String   @unique
+  password String
+  userType String
+  orgName String?
+}
