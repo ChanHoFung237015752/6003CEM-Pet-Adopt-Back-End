@@ -12,13 +12,7 @@ const prisma = new PrismaClient();
 export class UserController {
     static async register(req: Request, res: Response) {
         const { username, email, password, userType, registrationCode } = req.body;
-        let originalOrg: Organization | undefined;
-        if (userType === 'CHARITY_WORKER') {
-            originalOrg = organizations.find(org => org.registrationCode === registrationCode);
-            if (!originalOrg) {
-                return res.status(400).send('Invalid registration code.');
-            }
-        }
+        
 
         if (await prisma.user.findFirst({ where: { email } })) {
             return res.status(400).send('Email already used.');
@@ -26,6 +20,14 @@ export class UserController {
 
         if (await prisma.user.findFirst({ where: { username } })) {
             return res.status(400).send('Username already in use.');
+        }
+
+        let originalOrg: Organization | undefined;
+        if (userType === 'CHARITY_WORKER') {
+            originalOrg = organizations.find(org => org.registrationCode === registrationCode);
+            if (!originalOrg) {
+                return res.status(400).send('Invalid registration code.');
+            }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -64,7 +66,16 @@ export class UserController {
 
             const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET!, { expiresIn: '100y' });
 
-            res.json({ token });
+            res.json({ 
+                jwt: token,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    userType: user.userType,
+                    orgName: user.orgName,
+                }
+             });
         } catch (error) {
             console.log(error);
             res.status(500).send(`Internal server error`);
